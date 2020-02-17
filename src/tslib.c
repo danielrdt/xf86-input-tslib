@@ -535,17 +535,29 @@ static int xf86TslibInit(__attribute__ ((unused)) InputDriverPtr drv,
 	}
 
 	if (priv->abs_x_only) {
-		if (ioctl(pInfo->fd, EVIOCGABS(ABS_X), &absinfo) < 0) {
-			xf86IDrvMsg(pInfo, X_ERROR, "ioctl EVIOGABS failed");
-			return BadValue;
+		int32_t *max_x;
+		max_x = xf86SetIntOption(pInfo->options, "MaxX", NULL);
+		if (!max_x || max_x < 0){
+			if (ioctl(pInfo->fd, EVIOCGABS(ABS_X), &absinfo) < 0) {
+				xf86IDrvMsg(pInfo, X_ERROR, "ioctl EVIOGABS failed");
+				return BadValue;
+			}
+			priv->width = absinfo.maximum;
+		} else {
+			priv->width = max_x;
 		}
-		priv->width = absinfo.maximum;
-
-		if (ioctl(pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0) {
-			xf86IDrvMsg(pInfo, X_ERROR, "ioctl EVIOGABS failed");
-			return BadValue;
+		
+		int32_t *max_y;
+		max_y = xf86SetIntOption(pInfo->options, "MaxY", NULL);
+		if (!max_y || max_y < 0){
+			if (ioctl(pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0) {
+				xf86IDrvMsg(pInfo, X_ERROR, "ioctl EVIOGABS failed");
+				return BadValue;
+			}
+			priv->height = absinfo.maximum;
+		} else {
+			priv->height = max_y;
 		}
-		priv->height = absinfo.maximum;
 
 		if (!(absbit[BIT_WORD(ABS_PRESSURE)] & BIT_MASK(ABS_PRESSURE))) {
 			priv->pmax = 255; /* tslib internal */
